@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.wso2.siddhi:siddhi-core:4.1.38">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/wso2/siddhi/siddhi-core/4.1.38/siddhi-core-4.1.38.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/wso2/siddhi/siddhi-core/4.1.38/siddhi-core-4.1.38-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/wso2/siddhi/siddhi-core/4.1.38/siddhi-core-4.1.38-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

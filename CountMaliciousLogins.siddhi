@@ -1,0 +1,47 @@
+@App:name("CountMaliciousLogins")
+@App:description("HTTP Log Processor Benchmark for WSO2 Stream Processor 4.x.x-Count Maliciuos Logins")
+
+@source(type = 'kafka', partition.no.list='0', threading.option='single.thread', group.id="group", bootstrap.servers='kafka-service:9092', topic.list = 'test15',
+         @map(type = 'json'))
+
+define stream inputStream ( iij_timestamp long, ip string, timestamp long, zone float, cik double, accession string, doc string, code float, size double, idx float, norefer float, noagent float, find float, crawler float,groupID int, browser string);
+
+--Output of query 19
+@sink(type='log')
+define stream interimInputStream2(ip string);
+
+
+--Output of query 3: I want to know the IP of the malicious hosts which tries to make unauthorized login attempts within 1 minute intervals.
+@sink(type='log')
+define stream outputStreamBotAlert(ip string);
+
+--The Actual latency of parallel siddhi apps are gtting started to measure at this point
+@info(name = "Query11")
+@dist(execGroup='group11' ,parallel ='1')
+from inputStream
+select iij_timestamp, ip, timestamp, zone, cik, accession, doc, code, size, idx, norefer, noagent, find, crawler,browser, convert(time:timestampInMilliseconds(),'long') as injected_iijtimestamp
+insert into interimInputStream;
+
+@info(name = "Query19")
+@dist(execGroup='group11' ,parallel ='1')
+from inputStream
+select ip
+insert into interimInputStream2;
+
+--Query 3: Here all the accesses are either 401 or 403 and they have been done atleat 30 times within 1 minute time period.
+@info(name = "Query3")
+@dist(execGroup='group3' ,parallel ='6')
+partition with (ip of interimInputStream)
+begin
+    from interimInputStream#window.externalTimeBatch(timestamp, 1 min)
+    select  ip, count() as totalAccessCount, sum(ifThenElse(code == 401F, 1, 0)) as unauthorizedCount, sum(ifThenElse(code == 403F, 1, 0)) as forbiddenCount,injected_iijtimestamp as iijtimestamp
+    insert into #interimStream3;
+
+    from #interimStream3
+    select ip, totalAccessCount, (unauthorizedCount + forbiddenCount)/totalAccessCount as accessRatio 
+    insert into #interimStream5;
+
+    from #interimStream5 [totalAccessCount > 30L and accessRatio == 1.0]
+    select ip
+    insert into outputStreamBotAlert;
+end;
